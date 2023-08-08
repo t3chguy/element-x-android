@@ -40,7 +40,7 @@ class PreferencesRootNode @AssistedInject constructor(
         fun onOpenAnalytics()
         fun onOpenAbout()
         fun onOpenDeveloperSettings()
-        fun onOpenNotificationSettings()
+        fun onOpenNotificationsSettings()
     }
 
     private fun onOpenBugReport() {
@@ -63,8 +63,8 @@ class PreferencesRootNode @AssistedInject constructor(
         plugins<Callback>().forEach { it.onOpenAbout() }
     }
 
-    private fun onOpenNotificationSettings() {
-        plugins<Callback>().forEach { it.onOpenNotificationSettings() }
+    private fun onOpenNotificationsSettings() {
+        plugins<Callback>().forEach { it.onOpenNotificationsSettings() }
     }
 
     @Composable
@@ -79,7 +79,7 @@ class PreferencesRootNode @AssistedInject constructor(
             onOpenAbout = this::onOpenAbout,
             onVerifyClicked = this::onVerifyClicked,
             onOpenDeveloperSettings = this::onOpenDeveloperSettings,
-            onOpenNotificationSettings = this::onOpenNotificationSettings
+            onOpenNotificationsSettings = this::onOpenNotificationsSettings
         )
     }
 }

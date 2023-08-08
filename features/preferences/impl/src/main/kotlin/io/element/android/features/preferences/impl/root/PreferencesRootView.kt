@@ -56,7 +56,7 @@ fun PreferencesRootView(
     onOpenRageShake: () -> Unit,
     onOpenAbout: () -> Unit,
     onOpenDeveloperSettings: () -> Unit,
-    onOpenNotificationSettings: () -> Unit,
+    onOpenNotificationsSettings: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val snackbarHostState = rememberSnackbarHostState(snackbarMessage = state.snackbarMessage)
@@ -87,7 +87,7 @@ fun PreferencesRootView(
         PreferenceText(
             title = stringResource(id = CommonStrings.screen_notification_settings_title),
             icon = Icons.Outlined.Notifications,
-            onClick = onOpenNotificationSettings,
+            onClick = onOpenNotificationsSettings,
         )
         PreferenceText(
             title = stringResource(id = CommonStrings.action_report_bug),
@@ -147,6 +147,6 @@ private fun ContentToPreview(matrixUser: MatrixUser) {
         onOpenDeveloperSettings = {},
         onOpenAbout = {},
         onVerifyClicked = {},
-        onOpenNotificationSettings = {},
+        onOpenNotificationsSettings = {},
     )
 }
