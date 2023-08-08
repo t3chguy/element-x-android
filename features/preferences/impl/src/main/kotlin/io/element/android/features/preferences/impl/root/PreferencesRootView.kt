@@ -23,6 +23,7 @@ import androidx.compose.material.icons.outlined.BugReport
 import androidx.compose.material.icons.outlined.DeveloperMode
 import androidx.compose.material.icons.outlined.Help
 import androidx.compose.material.icons.outlined.InsertChart
+import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.VerifiedUser
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -55,6 +56,7 @@ fun PreferencesRootView(
     onOpenRageShake: () -> Unit,
     onOpenAbout: () -> Unit,
     onOpenDeveloperSettings: () -> Unit,
+    onOpenNotificationSettings: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val snackbarHostState = rememberSnackbarHostState(snackbarMessage = state.snackbarMessage)
@@ -82,6 +84,11 @@ fun PreferencesRootView(
                 onClick = onOpenAnalytics,
             )
         }
+        PreferenceText(
+            title = "Notifications",
+            icon = Icons.Outlined.Notifications,
+            onClick = onOpenNotificationSettings,
+        )
         PreferenceText(
             title = stringResource(id = CommonStrings.action_report_bug),
             icon = Icons.Outlined.BugReport,
@@ -140,5 +147,6 @@ private fun ContentToPreview(matrixUser: MatrixUser) {
         onOpenDeveloperSettings = {},
         onOpenAbout = {},
         onVerifyClicked = {},
+        onOpenNotificationSettings = {},
     )
 }
