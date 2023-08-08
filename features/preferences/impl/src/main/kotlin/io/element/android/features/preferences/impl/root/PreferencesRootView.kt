@@ -85,7 +85,7 @@ fun PreferencesRootView(
             )
         }
         PreferenceText(
-            title = "Notifications",
+            title = stringResource(id = CommonStrings.screen_notification_settings_title),
             icon = Icons.Outlined.Notifications,
             onClick = onOpenNotificationSettings,
         )
