@@ -34,5 +34,6 @@ sealed interface MessageComposerEvents {
         object VideoFromCamera : PickAttachmentSource
         object Location : PickAttachmentSource
     }
+    data class ToggleTextFormatting(val enabled: Boolean) : MessageComposerEvents
     object CancelSendAttachment : MessageComposerEvents
 }

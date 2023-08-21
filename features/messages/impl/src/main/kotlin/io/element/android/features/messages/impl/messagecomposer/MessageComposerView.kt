@@ -47,6 +47,10 @@ fun MessageComposerView(
         state.eventSink(MessageComposerEvents.CloseSpecialMode)
     }
 
+    fun onDismissTextFormatting() {
+        state.eventSink(MessageComposerEvents.ToggleTextFormatting(enabled = false))
+    }
+
     Box(modifier = modifier) {
         AttachmentsBottomSheet(
             state = state,
@@ -58,8 +62,10 @@ fun MessageComposerView(
             onRequestFocus = { state.composerState.requestFocus() },
             onSendMessage = ::sendMessage,
             composerMode = state.mode,
+            showTextFormatting = state.showTextFormatting,
             onResetComposerMode = ::onCloseSpecialMode,
             onAddAttachment = ::onAddAttachment,
+            onDismissTextFormatting = ::onDismissTextFormatting,
         )
     }
 }

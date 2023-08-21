@@ -25,7 +25,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -39,6 +38,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
@@ -53,6 +53,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
@@ -68,6 +70,7 @@ import io.element.android.libraries.designsystem.text.applyScaleUp
 import io.element.android.libraries.designsystem.theme.components.Icon
 import io.element.android.libraries.designsystem.theme.components.Surface
 import io.element.android.libraries.designsystem.theme.components.Text
+import io.element.android.libraries.designsystem.theme.components.TextButton
 import io.element.android.libraries.matrix.api.core.EventId
 import io.element.android.libraries.matrix.api.core.TransactionId
 import io.element.android.libraries.matrix.api.media.MediaSource
@@ -81,115 +84,163 @@ import io.element.android.wysiwyg.compose.RichTextEditorDefaults
 import io.element.android.wysiwyg.view.models.InlineFormat
 import kotlinx.coroutines.android.awaitFrame
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun TextComposer(
     state: TextComposerState,
     composerMode: MessageComposerMode,
     modifier: Modifier = Modifier,
+    showTextFormatting: Boolean = false,
     onRequestFocus: () -> Unit = {},
     onSendMessage: (String) -> Unit = {},
     onResetComposerMode: () -> Unit = {},
     onAddAttachment: () -> Unit = {},
+    onDismissTextFormatting: () -> Unit = {},
 ) {
-    Row(
-        modifier.padding(
+    @Composable
+    fun sendButton(
+        modifier: Modifier = Modifier,
+    ) = SendButton(
+        canSendMessage = state.canSendMessage,
+        onClick = { onSendMessage(state.messageMarkdown) },
+        composerMode = composerMode,
+        modifier = modifier,
+    )
+
+    Column(
+        modifier = modifier.padding(
             horizontal = 12.dp,
             vertical = 8.dp
-        ), verticalAlignment = Alignment.Bottom
-    ) {
-        AttachmentButton(onClick = onAddAttachment, modifier = Modifier.padding(vertical = 6.dp))
-        Spacer(modifier = Modifier.width(12.dp))
-        val roundCornerSmall = 20.dp.applyScaleUp()
-        val roundCornerLarge = 28.dp.applyScaleUp()
-
-        val roundedCornerSize = remember(state.lineCount, composerMode) {
-            if (state.lineCount > 1 || composerMode is MessageComposerMode.Special) {
-                roundCornerSmall
-            } else {
-                roundCornerLarge
-            }
-        }
-        val roundedCornerSizeState = animateDpAsState(
-            targetValue = roundedCornerSize,
-            animationSpec = tween(
-                durationMillis = 100,
-            )
         )
-        val roundedCorners = RoundedCornerShape(roundedCornerSizeState.value)
-        val minHeight = 42.dp.applyScaleUp()
-        val colors = ElementTheme.colors
-        val bgColor = colors.bgSubtleSecondary
-
-        val borderColor by remember(state.hasFocus, colors) {
-            derivedStateOf {
-                if (state.hasFocus) colors.borderDisabled else bgColor
-            }
-        }
-
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(roundedCorners)
-                .background(color = bgColor)
-                .border(1.dp, borderColor, roundedCorners)
+    ) {
+        Row(
+            verticalAlignment = Alignment.Bottom
         ) {
-            if (composerMode is MessageComposerMode.Special) {
-                ComposerModeView(composerMode = composerMode, onResetComposerMode = onResetComposerMode)
+            if (!showTextFormatting) {
+                EmphasisedButton(
+                    iconPainter = painterResource(R.drawable.ic_add_attachment),
+                    contentDescription = stringResource(R.string.rich_text_editor_a11y_add_attachment),
+                    onClick = onAddAttachment,
+                    modifier = Modifier.padding(vertical = 6.dp)
+                )
+                Spacer(modifier = Modifier.width(12.dp))
             }
-            val defaultTypography = ElementTheme.typography.fontBodyLgRegular
+            val roundCornerSmall = 20.dp.applyScaleUp()
+            val roundCornerLarge = 28.dp.applyScaleUp()
 
-            Box {
-                Box(
-                    modifier = Modifier
-                        .heightIn(min = minHeight)
-                        .background(color = bgColor, shape = roundedCorners)
-                        .padding(
-                            PaddingValues(
-                                top = 4.dp.applyScaleUp(),
-                                bottom = 4.dp.applyScaleUp(),
-                                start = 12.dp.applyScaleUp(),
-                                end = 42.dp.applyScaleUp()
-                            )
-                        ),
-                    contentAlignment = Alignment.CenterStart,
-                ) {
+            val roundedCornerSize = remember(state.lineCount, composerMode) {
+                if (state.lineCount > 1 || composerMode is MessageComposerMode.Special) {
+                    roundCornerSmall
+                } else {
+                    roundCornerLarge
+                }
+            }
+            val roundedCornerSizeState = animateDpAsState(
+                targetValue = roundedCornerSize,
+                animationSpec = tween(
+                    durationMillis = 100,
+                )
+            )
+            val roundedCorners = RoundedCornerShape(roundedCornerSizeState.value)
+            val minHeight = 42.dp.applyScaleUp()
+            val colors = ElementTheme.colors
+            val bgColor = colors.bgSubtleSecondary
 
-                    // Placeholder
-                    if (state.messageHtml.isEmpty()) {
-                        Text(
-                            stringResource(CommonStrings.common_message),
-                            style = defaultTypography.copy(
-                                color = ElementTheme.colors.textDisabled,
+            val borderColor by remember(state.hasFocus, colors) {
+                derivedStateOf {
+                    if (state.hasFocus) colors.borderDisabled else bgColor
+                }
+            }
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(roundedCorners)
+                    .background(color = bgColor)
+                    .border(1.dp, borderColor, roundedCorners)
+            ) {
+                if (composerMode is MessageComposerMode.Special) {
+                    ComposerModeView(composerMode = composerMode, onResetComposerMode = onResetComposerMode)
+                }
+                val defaultTypography = ElementTheme.typography.fontBodyLgRegular
+
+
+                Box {
+                    Box(
+                        modifier = Modifier
+                            .heightIn(min = minHeight)
+                            .background(color = bgColor, shape = roundedCorners)
+                            .padding(
+                                PaddingValues(
+                                    top = 4.dp.applyScaleUp(),
+                                    bottom = 4.dp.applyScaleUp(),
+                                    start = 12.dp.applyScaleUp(),
+                                    end = 42.dp.applyScaleUp()
+                                )
                             ),
+                        contentAlignment = Alignment.CenterStart,
+                    ) {
+
+                        // Placeholder
+                        if (state.messageHtml.isEmpty()) {
+                            Text(
+                                stringResource(CommonStrings.common_message),
+                                style = defaultTypography.copy(
+                                    color = ElementTheme.colors.textDisabled,
+                                ),
+                            )
+                        }
+
+                        RichTextEditor(
+                            state = state.richTextEditorState,
+                            modifier = Modifier
+                                .fillMaxWidth(),
+                            style = RichTextEditorDefaults.style(
+                                text = RichTextEditorDefaults.textStyle(
+                                    color = if (state.hasFocus) {
+                                        MaterialTheme.colorScheme.primary
+                                    } else {
+                                        MaterialTheme.colorScheme.secondary
+                                    }
+                                ),
+                                cursor = RichTextEditorDefaults.cursorStyle(
+                                    color = ElementTheme.colors.iconAccentTertiary,
+                                )
+                            )
                         )
                     }
 
-                    RichTextEditor(
-                        state = state.richTextEditorState,
-                        modifier = Modifier
-                            .fillMaxWidth(),
-                        style = RichTextEditorDefaults.style(
-                            text = RichTextEditorDefaults.textStyle(
-                                color = if (state.hasFocus) {
-                                    MaterialTheme.colorScheme.primary
-                                } else {
-                                    MaterialTheme.colorScheme.secondary
-                                }
-                            ),
-                            cursor = RichTextEditorDefaults.cursorStyle(
-                                color = ElementTheme.colors.iconAccentTertiary,
-                            )
+                    if (!showTextFormatting) {
+                        sendButton(
+                            modifier = Modifier
+                                .align(Alignment.BottomEnd)
+                                .applyIf(composerMode !is MessageComposerMode.Edit, ifTrue = {
+                                    padding(start = 1.dp.applyScaleUp()) // Center the arrow in the circle
+                                })
+                                .padding(end = 6.dp.applyScaleUp(), bottom = 6.dp.applyScaleUp())
                         )
-                    )
+                    }
                 }
+            }
+        }
 
-                SendButton(
-                    canSendMessage = state.canSendMessage,
-                    onClick = { onSendMessage(state.messageMarkdown) },
-                    composerMode = composerMode,
-                    modifier = Modifier.padding(end = 6.dp.applyScaleUp(), bottom = 6.dp.applyScaleUp())
-                )
+        if (showTextFormatting) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    EmphasisedButton(
+                        iconPainter = rememberVectorPainter(Icons.Rounded.Close),
+                        contentDescription = stringResource(CommonStrings.action_close),
+                        onClick = onDismissTextFormatting,
+                    )
+                    TextButton(text = "Bold", onClick = { state.richTextEditorState.toggleInlineFormat(InlineFormat.Bold) })
+                    TextButton(text = "Italic", onClick = { state.richTextEditorState.toggleInlineFormat(InlineFormat.Italic) })
+                }
+                sendButton()
             }
         }
     }
@@ -340,7 +391,9 @@ private fun ReplyToModeView(
 }
 
 @Composable
-private fun AttachmentButton(
+private fun EmphasisedButton(
+    iconPainter: Painter,
+    contentDescription: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -352,9 +405,9 @@ private fun AttachmentButton(
         color = ElementTheme.colors.iconPrimary
     ) {
         Image(
-            modifier = Modifier.size(12.5f.dp.applyScaleUp()),
-            painter = painterResource(R.drawable.ic_add_attachment),
-            contentDescription = stringResource(R.string.rich_text_editor_a11y_add_attachment),
+            modifier = Modifier.size(6.dp.applyScaleUp()),
+            painter = iconPainter,
+            contentDescription = contentDescription,
             contentScale = ContentScale.Inside,
             colorFilter = ColorFilter.tint(
                 LocalContentColor.current
@@ -364,7 +417,7 @@ private fun AttachmentButton(
 }
 
 @Composable
-private fun BoxScope.SendButton(
+private fun SendButton(
     canSendMessage: Boolean,
     onClick: () -> Unit,
     composerMode: MessageComposerMode,
@@ -376,10 +429,6 @@ private fun BoxScope.SendButton(
             .clip(CircleShape)
             .background(if (canSendMessage) ElementTheme.colors.iconAccentTertiary else Color.Transparent)
             .size(30.dp.applyScaleUp())
-            .align(Alignment.BottomEnd)
-            .applyIf(composerMode !is MessageComposerMode.Edit, ifTrue = {
-                padding(start = 1.dp.applyScaleUp()) // Center the arrow in the circle
-            })
             .clickable(
                 enabled = canSendMessage,
                 interactionSource = interactionSource,
@@ -427,6 +476,28 @@ internal fun TextComposerSimplePreview() = ElementPreview {
             onSendMessage = {},
             composerMode = MessageComposerMode.Normal(""),
             onResetComposerMode = {},
+        )
+    }
+}
+
+@DayNightPreviews
+@Composable
+internal fun TextComposerFormattingPreview() = ElementPreview {
+    Column {
+        TextComposer(
+            previewTextComposerState(""),
+            showTextFormatting = true,
+            composerMode = MessageComposerMode.Normal(""),
+        )
+        TextComposer(
+            previewTextComposerState("A message"),
+            showTextFormatting = true,
+            composerMode = MessageComposerMode.Normal(""),
+        )
+        TextComposer(
+            previewTextComposerState("A message\nWith several lines\nTo preview larger textfields and long lines with overflow"),
+            showTextFormatting = true,
+            composerMode = MessageComposerMode.Normal(""),
         )
     }
 }

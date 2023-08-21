@@ -25,6 +25,7 @@ import androidx.compose.material.ListItem
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AttachFile
 import androidx.compose.material.icons.filled.Collections
+import androidx.compose.material.icons.filled.FormatColorText
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.Videocam
@@ -131,6 +132,11 @@ internal fun AttachmentSourcePickerMenu(
                 text = { Text(stringResource(R.string.screen_room_attachment_source_location)) },
             )
         }
+        ListItem(
+            modifier = Modifier.clickable { state.eventSink(MessageComposerEvents.ToggleTextFormatting(enabled = true)) },
+            icon = { Icon(Icons.Default.FormatColorText, null) },
+            text = { Text(stringResource(R.string.screen_room_attachment_formatting)) },
+        )
     }
 }
 
